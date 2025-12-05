@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gacha Store</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f7;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 980px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 48px;
+            font-weight: 600;
+            color: #1d1d1f;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            font-size: 21px;
+            color: #6e6e73;
+            margin-bottom: 40px;
+        }
+
+        /* USER VIEW */
+        .user-view {
+            display: none;
+        }
+
+        .user-view.active {
+            display: block;
+        }
+
+        .gacha-box {
+            background: white;
+            padding: 80px 40px;
+            border-radius: 18px;
+            text-align: center;
+            border: 1px solid #d2d2d7;
+        }
+
+        .start-btn {
+            padding: 20px 60px;
+            font-size: 24px;
+            font-weight: 600;
+            background: #0071e3;
+            color: white;
+            border: none;
+            border-radius: 980px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 60px;
+        }
+
+        .start-btn:hover {
+            background: #0077ed;
+            transform: scale(1.02);
+        }
+
+        .start-btn:active {
+            transform: scale(0.98);
+        }
+
+        .start-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .result {
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .gacha-card {
+            width: 280px;
+            height: 180px;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .gacha-card.revealing {
+            animation: cardFlip 0.6s ease-in-out;
+        }
+
+        @keyframes cardFlip {
+            0% {
+                transform: rotateY(0deg) scale(1);
+            }
+            50% {
+                transform: rotateY(90deg) scale(1.1);
+            }
+            100% {
+                transform: rotateY(0deg) scale(1);
+            }
+        }
+
+        .gacha-card.final {
+            animation: cardReveal 0.8s ease-out;
+        }
+
+        @keyframes cardReveal {
+            0% {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.15);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .rarity-common { 
+            background: linear-gradient(135deg, #e8e8ed 0%, #d2d2d7 100%);
+        }
+        .rarity-rare { 
+            background: linear-gradient(135deg, #0071e3 0%, #005bb5 100%);
+        }
+        .rarity-epic { 
+            background: linear-gradient(135deg, #bf5af2 0%, #9b30ff 100%);
+        }
+        .rarity-legendary { 
+            background: linear-gradient(135deg, #ff9500 0%, #ff6b00 100%);
+            animation: legendaryGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes legendaryGlow {
+            0%, 100% {
+                box-shadow: 0 4px 20px rgba(255, 149, 0, 0.4);
+            }
+            50% {
+                box-shadow: 0 4px 40px rgba(255, 149, 0, 0.8);
+            }
+        }
+
+        .item-name {
+            font-size: 24px;
+            font-weight: 600;
+            color: white;
+            margin-top: 12px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .rarity-common .item-name {
+            color: #1d1d1f;
+            text-shadow: none;
+        }
+
+        .item-rarity {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.9);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 500;
+            margin-top: 4px;
+        }
+
+        .rarity-common .item-rarity {
+            color: #6e6e73;
+        }
+
+        .rarity-icon {
+            font-size: 48px;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+        }
+
+        .skip-hint {
+            font-size: 13px;
+            color: #6e6e73;
+            margin-top: 20px;
+        }
+
+        /* ADMIN VIEW */
+        .admin-view {
+            display: none;
+        }
+
+        .admin-view.active {
+            display: block;
+        }
+
+        .admin-section {
+            background: white;
+            padding: 40px;
+            border-radius: 18px;
+            border: 1px solid #d2d2d7;
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 28px;
+            font-weight: 600;
+            color: #1d1d1f;
+            margin-bottom: 24px;
+        }
+
+        .item-row {
+            display: grid;
+            grid-template-columns: 2fr 120px 140px 80px;
+            gap: 12px;
+            padding: 16px 0;
+            border-bottom: 1px solid #d2d2d7;
+            align-items: center;
+        }
+
+        .item-row:last-child {
+            border-bottom: none;
+        }
+
+        .item-row input, .item-row select {
+            padding: 12px 16px;
+            border: 1px solid #d2d2d7;
+            border-radius: 8px;
+            font-size: 15px;
+            background: #f5f5f7;
+            color: #1d1d1f;
+            font-family: inherit;
+        }
+
+        .item-row input:focus, .item-row select:focus {
+            outline: none;
+            border-color: #0071e3;
+            background: white;
+        }
+
+        .btn-delete {
+            padding: 8px 16px;
+            background: #ff3b30;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .btn-delete:hover {
+            background: #ff453a;
+        }
+
+        .btn-add {
+            padding: 14px 28px;
+            background: #0071e3;
+            color: white;
+            border: none;
+            border-radius: 980px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 500;
+            margin-top: 24px;
+        }
+
+        .btn-add:hover {
+            background: #0077ed;
+        }
+
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .inventory-card {
+            padding: 24px;
+            border-radius: 12px;
+            border: 1px solid #d2d2d7;
+        }
+
+        .inv-name {
+            font-size: 17px;
+            font-weight: 500;
+            color: #1d1d1f;
+            margin-bottom: 4px;
+        }
+
+        .inv-count {
+            font-size: 14px;
+            color: #6e6e73;
+        }
+
+        /* TOGGLE */
+        .view-toggle {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 40px;
+        }
+
+        .toggle-btn {
+            padding: 12px 24px;
+            background: white;
+            color: #1d1d1f;
+            border: 1px solid #d2d2d7;
+            border-radius: 980px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .toggle-btn.active {
+            background: #0071e3;
+            color: white;
+            border-color: #0071e3;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6e6e73;
+            font-size: 17px;
+        }
+
+        /* PASSWORD MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 18px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1d1d1f;
+            margin-bottom: 24px;
+        }
+
+        .password-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid #d2d2d7;
+            border-radius: 8px;
+            font-size: 17px;
+            margin-bottom: 16px;
+            font-family: inherit;
+        }
+
+        .password-input:focus {
+            outline: none;
+            border-color: #0071e3;
+        }
+
+        .modal-btn {
+            width: 100%;
+            padding: 14px;
+            background: #0071e3;
+            color: white;
+            border: none;
+            border-radius: 980px;
+            font-size: 17px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-bottom: 8px;
+        }
+
+        .modal-btn:hover {
+            background: #0077ed;
+        }
+
+        .modal-btn.cancel {
+            background: #e8e8ed;
+            color: #1d1d1f;
+        }
+
+        .modal-btn.cancel:hover {
+            background: #d2d2d7;
+        }
+
+        .error-msg {
+            color: #ff3b30;
+            font-size: 14px;
+            margin-top: 8px;
+            display: none;
+        }
+
+        .error-msg.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="view-toggle">
+            <button class="toggle-btn active" onclick="switchView('user')">Gacha</button>
+            <button class="toggle-btn" onclick="switchView('admin')">Admin</button>
+        </div>
+
+        <!-- USER VIEW -->
+        <div class="user-view active" id="user-view">
+            <h1>Echoes of Nusantara</h1>
+            <p class="subtitle">Test your luck</p>
+
+            <div class="gacha-box">
+                <button class="start-btn" id="start-btn" onclick="doGacha()">Start</button>
+                <div class="result" id="result"></div>
+            </div>
+        </div>
+
+        <!-- ADMIN VIEW -->
+        <div class="admin-view" id="admin-view">
+            <h1>Admin</h1>
+            <p class="subtitle">Manage items and inventory</p>
+
+            <div class="admin-section">
+                <div class="section-title">Items</div>
+                <div id="item-list"></div>
+                <button class="btn-add" onclick="addNewItem()">Add Item</button>
+            </div>
+
+            <div class="admin-section">
+                <div class="section-title">Inventory</div>
+                <div class="inventory-grid" id="inventory-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PASSWORD MODAL -->
+    <div class="modal" id="password-modal">
+        <div class="modal-content">
+            <div class="modal-title">Admin Access</div>
+            <input type="password" class="password-input" id="password-input" placeholder="Enter password">
+            <div class="error-msg" id="error-msg">Wrong password</div>
+            <button class="modal-btn" onclick="checkPassword()">Enter</button>
+            <button class="modal-btn cancel" onclick="closeModal()">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        const ADMIN_PASSWORD = "admin123";
+        let isAdminUnlocked = false;
+        let isAnimating = false;
+        let items = [
+            { name: "Common Item", probability: 50, rarity: "common", icon: "⚪" },
+            { name: "Rare Item", probability: 30, rarity: "rare", icon: "🔵" },
+            { name: "Epic Item", probability: 15, rarity: "epic", icon: "🟣" },
+            { name: "Legendary Item", probability: 5, rarity: "legendary", icon: "🟠" }
+        ];
+        let inventory = {};
+
+        const rarityOrder = ['common', 'rare', 'epic', 'legendary'];
+
+        function switchView(view) {
+            if (view === 'admin' && !isAdminUnlocked) {
+                showPasswordModal();
+                return;
+            }
+
+            document.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            if (view === 'user') {
+                document.getElementById('user-view').classList.add('active');
+                document.getElementById('admin-view').classList.remove('active');
+            } else {
+                document.getElementById('user-view').classList.remove('active');
+                document.getElementById('admin-view').classList.add('active');
+                renderAdminPanel();
+                updateInventoryDisplay();
+            }
+        }
+
+        function showPasswordModal() {
+            document.getElementById('password-modal').classList.add('active');
+            document.getElementById('password-input').value = '';
+            document.getElementById('error-msg').classList.remove('show');
+            document.getElementById('password-input').focus();
+        }
+
+        function closeModal() {
+            document.getElementById('password-modal').classList.remove('active');
+            document.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.toggle-btn')[0].classList.add('active');
+        }
+
+        function checkPassword() {
+            const input = document.getElementById('password-input').value;
+            if (input === ADMIN_PASSWORD) {
+                isAdminUnlocked = true;
+                document.getElementById('password-modal').classList.remove('active');
+                
+                document.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.toggle-btn')[1].classList.add('active');
+                document.getElementById('user-view').classList.remove('active');
+                document.getElementById('admin-view').classList.add('active');
+                
+                renderAdminPanel();
+                updateInventoryDisplay();
+            } else {
+                document.getElementById('error-msg').classList.add('show');
+            }
+        }
+
+        document.getElementById('password-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkPassword();
+            }
+        });
+
+        async function doGacha() {
+            if (isAnimating) return;
+            
+            isAnimating = true;
+            const btn = document.getElementById('start-btn');
+            btn.disabled = true;
+            
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '';
+
+            const finalItem = getRandomItem();
+            const finalRarityIndex = rarityOrder.indexOf(finalItem.rarity);
+            
+            // Animasi reveal dari common ke rarity final
+            for (let i = 0; i <= finalRarityIndex; i++) {
+                const currentRarity = rarityOrder[i];
+                const currentItem = items.find(item => item.rarity === currentRarity) || items[i];
+                
+                const card = document.createElement('div');
+                card.className = `gacha-card rarity-${currentRarity} revealing`;
+                card.innerHTML = `
+                    <div class="rarity-icon">${currentItem.icon}</div>
+                    <div class="item-name">${currentItem.name}</div>
+                    <div class="item-rarity">${currentRarity}</div>
+                `;
+                
+                resultDiv.innerHTML = '';
+                resultDiv.appendChild(card);
+                
+                // Delay antara reveal, lebih lama untuk rarity lebih tinggi
+                await new Promise(resolve => setTimeout(resolve, i === finalRarityIndex ? 800 : 400));
+            }
+
+            // Final reveal dengan animasi lebih dramatis
+            resultDiv.innerHTML = '';
+            const finalCard = document.createElement('div');
+            finalCard.className = `gacha-card rarity-${finalItem.rarity} final`;
+            finalCard.innerHTML = `
+                <div class="rarity-icon">${finalItem.icon}</div>
+                <div class="item-name">${finalItem.name}</div>
+                <div class="item-rarity">${finalItem.rarity}</div>
+            `;
+            resultDiv.appendChild(finalCard);
+
+            // Tambahin ke inventory
+            if (!inventory[finalItem.name]) {
+                inventory[finalItem.name] = { count: 0, rarity: finalItem.rarity };
+            }
+            inventory[finalItem.name].count++;
+
+            // Tambahin hint buat skip
+            const hint = document.createElement('div');
+            hint.className = 'skip-hint';
+            hint.textContent = 'Click Start again for next pull';
+            resultDiv.appendChild(hint);
+
+            isAnimating = false;
+            btn.disabled = false;
+        }
+
+        function getRandomItem() {
+            const totalProb = items.reduce((sum, item) => sum + item.probability, 0);
+            let random = Math.random() * totalProb;
+
+            for (let item of items) {
+                random -= item.probability;
+                if (random <= 0) {
+                    return { ...item };
+                }
+            }
+            return { ...items[items.length - 1] };
+        }
+
+        function updateInventoryDisplay() {
+            const grid = document.getElementById('inventory-grid');
+            grid.innerHTML = '';
+
+            const totalItems = Object.values(inventory).reduce((sum, item) => sum + item.count, 0);
+
+            if (totalItems === 0) {
+                grid.innerHTML = '<div class="empty-state">No items yet</div>';
+                return;
+            }
+
+            Object.entries(inventory).forEach(([name, data]) => {
+                const card = document.createElement('div');
+                card.className = 'inventory-card';
+                card.innerHTML = `
+                    <div class="inv-name">${name}</div>
+                    <div class="inv-count">×${data.count}</div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function renderAdminPanel() {
+            const listDiv = document.getElementById('item-list');
+            listDiv.innerHTML = '';
+
+            items.forEach((item, index) => {
+                const row = document.createElement('div');
+                row.className = 'item-row';
+                row.innerHTML = `
+                    <input type="text" value="${item.name}" onchange="updateItem(${index}, 'name', this.value)" placeholder="Item name">
+                    <input type="number" value="${item.probability}" onchange="updateItem(${index}, 'probability', parseFloat(this.value))" min="0" step="0.1" placeholder="Probability">
+                    <select onchange="updateItem(${index}, 'rarity', this.value)">
+                        <option value="common" ${item.rarity === 'common' ? 'selected' : ''}>Common</option>
+                        <option value="rare" ${item.rarity === 'rare' ? 'selected' : ''}>Rare</option>
+                        <option value="epic" ${item.rarity === 'epic' ? 'selected' : ''}>Epic</option>
+                        <option value="legendary" ${item.rarity === 'legendary' ? 'selected' : ''}>Legendary</option>
+                    </select>
+                    <button class="btn-delete" onclick="deleteItem(${index})">Delete</button>
+                `;
+                listDiv.appendChild(row);
+            });
+        }
+
+        function updateItem(index, field, value) {
+            items[index][field] = value;
+        }
+
+        function deleteItem(index) {
+            items.splice(index, 1);
+            renderAdminPanel();
+        }
+
+        function addNewItem() {
+            items.push({
+                name: "New Item",
+                probability: 10,
+                rarity: "common",
+                icon: "⚪"
+            });
+            renderAdminPanel();
+        }
+    </script>
+</body>
+</html>
